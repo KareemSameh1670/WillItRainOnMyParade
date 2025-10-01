@@ -19,14 +19,14 @@ namespace WillItRainOnMyParade.BLL.Services
         {
         private readonly INasaWeatherClient nasaWeatherClient;
         // Temperature (°C)
-        public const float VeryHot = 38.0f;
-        public const float VeryCold = 8.0f;
+        public const float VeryHot = 30.0f;
+        public const float VeryCold = 15.0f;
 
         // Wind speed (m/s)
-        public const float VeryWindy = 12.0f;
+        public const float VeryWindy = 10.0f;
 
         // Precipitation (mm/day)
-        public const float VeryWet = 15.0f;
+        public const float VeryWet = 0.0f;
 
         // Humidity (%)
         public const float VeryHumid = 70.0f;
@@ -46,34 +46,37 @@ namespace WillItRainOnMyParade.BLL.Services
                 
                 if (weatherRecords == null) 
                     weatherRecords= new List<WeatherConditions>();
-                return Search(weatherRecords, startDate, endDate);
+                return Search(weatherRecords);
             }
-        private WeatherPredictionResult Search(List<WeatherConditions> weatherRecords, DateTime startDate, DateTime endDate)
+        private WeatherPredictionResult Search(List<WeatherConditions> weatherRecords)
         {
             float NumOfHotDays = 0, NumOfColdDays = 0, NumOfWindyDays = 0, NumOfWetDays = 0, NumOfHumidDays = 0;
-            int CurrYear = startDate.Year;
-            int count=0;
-            while(startDate < endDate)
+            float TotalTemp = 0, TotalHumidty = 0, TotalPrecipitation = 0, TotalWindSpeed = 0;
+            int count= weatherRecords.Count;
+            foreach (var weatherRecord in weatherRecords)
             {
-            var weatherConditions = weatherRecords[startDate.DayOfYear - 1];
+                if (weatherRecord.T2M > VeryHot)    NumOfHotDays++;
+                else if (weatherRecord.T2M < VeryCold)  NumOfColdDays++;
 
-                if (weatherConditions.T2M > VeryHot)    NumOfHotDays++;
-                else if (weatherConditions.T2M < VeryCold)  NumOfColdDays++;
+                if (weatherRecord.WS2M > VeryWindy) NumOfWindyDays++;
 
-                if (weatherConditions.WS2M > VeryWindy) NumOfWindyDays++;
+                if(weatherRecord.RH2M > VeryHumid)  NumOfHumidDays++;
 
-                if(weatherConditions.RH2M > VeryHumid)  NumOfHumidDays++;
+                if(weatherRecord.PRECTOTCORR > VeryWet) NumOfWetDays++;
 
-                if(weatherConditions.PRECTOTCORR > VeryWet) NumOfWetDays++;
+                TotalTemp += weatherRecord.T2M;
+                TotalHumidty += weatherRecord.RH2M;
+                TotalPrecipitation += weatherRecord.PRECTOTCORR;
+                TotalWindSpeed += weatherRecord.WS2M;
 
-                startDate = startDate.AddYears(1);
-                count++;
             }
             var Result = new WeatherPredictionResult 
             {
+                AvgTemp = TotalTemp/count, AvgHumidity= TotalHumidty/count,
+                AvgPrecipitation = TotalPrecipitation/count, AvgWindSpeed= TotalWindSpeed/count,
                 HotTempPercent = NumOfHotDays/count, ColdTempPercent = NumOfColdDays/count,
-                HumidityPercent = NumOfHumidDays/count, PrecipitationPercent= NumOfWetDays/count,
-                WindSpeedPercent= NumOfWindyDays/count 
+                HighHumidityPercent = NumOfHumidDays/count, PrecipitationPercent= NumOfWetDays/count,
+                HighWindSpeedPercent = NumOfWindyDays/count 
             };
             return Result;
         }

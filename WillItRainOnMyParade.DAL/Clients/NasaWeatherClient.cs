@@ -25,18 +25,15 @@ namespace WillItRainOnMyParade.DAL.Clients
              $"&parameters=T2M,PRECTOTCORR,RH2M,WS2M,ALLSKY_KT" +
              $"&community=ag&format=JSON";
 
-            var response = await _httpClient.GetAsync(url);
-            
 
-            if (!response.IsSuccessStatusCode) throw new NullReferenceException("Bad Request"); ;
+            using var stream = await _httpClient.GetStreamAsync(url);
+            var CondationsList = new List<WeatherConditions>();
 
-            var json = await response.Content.ReadAsStringAsync();
-            var data = JsonSerializer.Deserialize<List<WeatherConditions>>(json,
-                new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-            Console.WriteLine("NASA RESPONSE:");
-            Console.WriteLine(json);
-            if (data == null) throw new NullReferenceException("Invalid URL");
-            return data;
+            await foreach (var wc in WeatherDataParser.ReadWeatherAsync(stream, d => d.Month == start.Month && d.Day == start.Day, start, end))
+            {
+                CondationsList.Add(wc);
+            }
+            return CondationsList;
         }
 
     }
