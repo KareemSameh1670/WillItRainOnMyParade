@@ -16,13 +16,10 @@ namespace WillItRainOnMyParade.Controllers
             _weatherService = weatherService;
         }
 
-        [HttpGet("daily-mean")]
-        public async Task<ActionResult<WeatherPredictionResult>> GetDailyMean(
-           [FromQuery] double lat,
-           [FromQuery] double lon,
-           [FromQuery] DateTime date)
+        [HttpGet("{lat:float}/{lon:float}/{date:datetime}")]
+        public async Task<ActionResult<WeatherPredictionResult>> GetDailyMean(float lat, float lon, DateTime date, [FromQuery] int NumOfYears=10)
         {
-            var result = await _weatherService.GetDailyMean(lat, lon, date);
+            var result = await _weatherService.GetDailyProbabilities(lat, lon, date, NumOfYears);
             if (result == null)
                 return NotFound("Could not fetch weather data from NASA API.");
 

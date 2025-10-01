@@ -17,7 +17,7 @@ namespace WillItRainOnMyParade.DAL.Clients
             _httpClient = httpClient;
         }
 
-        public async Task<NasaWeatherResponse?> GetDailyDataAsync(double lat, double lon, DateTime start, DateTime end)
+        public async Task<List<WeatherConditions>> GetDailyDataAsync(float lat, float lon, DateTime start, DateTime end)
         {
             string url = $"https://power.larc.nasa.gov/api/temporal/daily/point" +
              $"?start={start:yyyyMMdd}&end={end:yyyyMMdd}" +
@@ -28,14 +28,16 @@ namespace WillItRainOnMyParade.DAL.Clients
             var response = await _httpClient.GetAsync(url);
             
 
-            if (!response.IsSuccessStatusCode) return null;
+            if (!response.IsSuccessStatusCode) throw new NullReferenceException("Bad Request"); ;
 
             var json = await response.Content.ReadAsStringAsync();
-            var data = JsonSerializer.Deserialize<NasaWeatherResponse>(json,
+            var data = JsonSerializer.Deserialize<List<WeatherConditions>>(json,
                 new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
             Console.WriteLine("NASA RESPONSE:");
             Console.WriteLine(json);
+            if (data == null) throw new NullReferenceException("Invalid URL");
             return data;
         }
+
     }
 }

@@ -9,6 +9,6 @@ namespace WillItRainOnMyParade.DAL.Clients
 {
     public interface INasaWeatherClient
     {
-        Task<NasaWeatherResponse?> GetDailyDataAsync(double lat, double lon, DateTime start, DateTime end);
+        public Task<List<WeatherConditions>> GetDailyDataAsync(float lat, float lon, DateTime start, DateTime end);
     }
 }
