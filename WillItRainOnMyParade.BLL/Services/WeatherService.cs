@@ -19,14 +19,14 @@ namespace WillItRainOnMyParade.BLL.Services
         {
         private readonly INasaWeatherClient nasaWeatherClient;
         // Temperature (°C)
-        public const float VeryHot = 38.0f;
-        public const float VeryCold = 8.0f;
+        public const float VeryHot = 30.0f;
+        public const float VeryCold = 15.0f;
 
         // Wind speed (m/s)
-        public const float VeryWindy = 12.0f;
+        public const float VeryWindy = 10.0f;
 
         // Precipitation (mm/day)
-        public const float VeryWet = 15.0f;
+        public const float VeryWet = 0.0f;
 
         // Humidity (%)
         public const float VeryHumid = 70.0f;
@@ -36,7 +36,7 @@ namespace WillItRainOnMyParade.BLL.Services
             public async Task<WeatherPredictionResult> GetDailyProbabilities(float lat, float lon,DateTime date, int NumOfYears=10)
             {
                 DateTime endDate = new DateTime (DateTime.Now.AddYears(-1).Year, 12, 31);
-            int MaxYearsRange = endDate.Year - new DateTime(1980, 1, 1).Year;
+            int MaxYearsRange = endDate.Year - new DateTime(1980, 1, 1).Year-1;
             if (NumOfYears > MaxYearsRange)
                 throw new ArgumentException($"Invalid Date Range, Please make sure you are not Exceeding {MaxYearsRange} Years");
                 DateTime startDate = new (endDate.AddYears(-NumOfYears).Year, date.Month, date.Day);
@@ -46,34 +46,37 @@ namespace WillItRainOnMyParade.BLL.Services
                 
                 if (weatherRecords == null) 
                     weatherRecords= new List<WeatherConditions>();
-                return Search(weatherRecords, startDate, endDate);
+                return Search(weatherRecords);
             }
-        private WeatherPredictionResult Search(List<WeatherConditions> weatherRecords, DateTime startDate, DateTime endDate)
+        private WeatherPredictionResult Search(List<WeatherConditions> weatherRecords)
         {
             float NumOfHotDays = 0, NumOfColdDays = 0, NumOfWindyDays = 0, NumOfWetDays = 0, NumOfHumidDays = 0;
-            int CurrYear = startDate.Year;
-            int count=0;
-            while(startDate < endDate)
+            float TotalTemp = 0, TotalHumidty = 0, TotalPrecipitation = 0, TotalWindSpeed = 0;
+            int count= weatherRecords.Count;
+            foreach (var weatherRecord in weatherRecords)
             {
-            var weatherConditions = weatherRecords[startDate.DayOfYear - 1];
+                if (weatherRecord.T2M > VeryHot)    NumOfHotDays++;
+                else if (weatherRecord.T2M < VeryCold)  NumOfColdDays++;
 
-                if (weatherConditions.T2M > VeryHot)    NumOfHotDays++;
-                else if (weatherConditions.T2M < VeryCold)  NumOfColdDays++;
+                if (weatherRecord.WS2M > VeryWindy) NumOfWindyDays++;
 
-                if (weatherConditions.WS2M > VeryWindy) NumOfWindyDays++;
+                if(weatherRecord.RH2M > VeryHumid)  NumOfHumidDays++;
 
-                if(weatherConditions.RH2M > VeryHumid)  NumOfHumidDays++;
+                if(weatherRecord.PRECTOTCORR > VeryWet) NumOfWetDays++;
 
-                if(weatherConditions.PRECTOTCORR > VeryWet) NumOfWetDays++;
+                TotalTemp += weatherRecord.T2M;
+                TotalHumidty += weatherRecord.RH2M;
+                TotalPrecipitation += weatherRecord.PRECTOTCORR;
+                TotalWindSpeed += weatherRecord.WS2M;
 
-                startDate = startDate.AddYears(1);
-                count++;
             }
             var Result = new WeatherPredictionResult 
             {
-                HotTempPercent = NumOfHotDays/count, ColdTempPercent = NumOfColdDays/count,
-                HumidityPercent = NumOfHumidDays/count, PrecipitationPercent= NumOfWetDays/count,
-                WindSpeedPercent= NumOfWindyDays/count 
+                AvgTemp = TotalTemp/count, AvgHumidity= TotalHumidty/count,
+                AvgPrecipitation = TotalPrecipitation/count, AvgWindSpeed= TotalWindSpeed/count,
+                HotTempPercent = NumOfHotDays/count*100, ColdTempPercent = NumOfColdDays/count*100,
+                HighHumidityPercent = NumOfHumidDays/count * 100, PrecipitationPercent= NumOfWetDays/count * 100,
+                HighWindSpeedPercent = NumOfWindyDays/count * 100
             };
             return Result;
         }

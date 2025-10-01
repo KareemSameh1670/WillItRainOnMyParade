@@ -8,11 +8,17 @@ namespace WillItRainOnMyParade.BLL.DTOs
 {
     public class WeatherPredictionResult
     {
+        public float AvgTemp{ get; set; }
+        public float AvgPrecipitation{ get; set; }
+        public float AvgHumidity{ get; set; }
+        public float AvgWindSpeed { get; set; }
+
         public float HotTempPercent { get; set; }
         public float ColdTempPercent { get; set; }
         public float PrecipitationPercent { get; set; }
-        public float HumidityPercent { get; set; }
-        public float WindSpeedPercent { get; set; }
+        public float HighHumidityPercent { get; set; }
+        public float HighWindSpeedPercent { get; set; }
+
         public float SolarRadiationPercent { get; set; }
     }
 }
