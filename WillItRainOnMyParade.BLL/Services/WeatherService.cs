@@ -13,11 +13,12 @@ using WillItRainOnMyParade.DAL.DTOs;
 
 namespace WillItRainOnMyParade.BLL.Services
 {
-   
-    
-        public class WeatherService : IWeatherService
-        {
+    public class WeatherService : IWeatherService
+    {
         private readonly INasaWeatherClient nasaWeatherClient;
+        private readonly IGoogleAIService googleAIService;
+
+        #region Standard Conditions
         // Temperature (°C)
         public const float VeryHot = 30.0f;
         public const float VeryCold = 15.0f;
@@ -30,25 +31,31 @@ namespace WillItRainOnMyParade.BLL.Services
 
         // Humidity (%)
         public const float VeryHumid = 70.0f;
+        #endregion        
+        public WeatherService(INasaWeatherClient nasaWeatherClient, IGoogleAIService googleAIService)
+        {
+            this.nasaWeatherClient = nasaWeatherClient;
+            this.googleAIService = googleAIService;
+        }
 
-        public WeatherService(INasaWeatherClient nasaWeatherClient)=>this.nasaWeatherClient = nasaWeatherClient;
-
-            public async Task<WeatherPredictionResult> GetDailyProbabilities(float lat, float lon,DateTime date, int NumOfYears=10)
-            {
-                DateTime endDate = new DateTime (DateTime.Now.AddYears(-1).Year, 12, 31);
+        public async Task<WeatherPredictionResult> GetDailyProbabilities(float lat, float lon,DateTime date, int NumOfYears=10)
+        {
+            DateTime endDate = new DateTime (DateTime.Now.AddYears(-1).Year, 12, 31);
             int MaxYearsRange = endDate.Year - new DateTime(1980, 1, 1).Year-1;
             if (NumOfYears > MaxYearsRange)
                 throw new ArgumentException($"Invalid Date Range, Please make sure you are not Exceeding {MaxYearsRange} Years");
-                DateTime startDate = new (endDate.AddYears(-NumOfYears).Year, date.Month, date.Day);
+            DateTime startDate = new (endDate.AddYears(-NumOfYears).Year, date.Month, date.Day);
                 
 
-                var weatherRecords= await nasaWeatherClient.GetDailyDataAsync(lat, lon, startDate, endDate);
+            var weatherRecords= await nasaWeatherClient.GetDailyDataAsync(lat, lon, startDate, endDate);
                 
-                if (weatherRecords == null) 
-                    weatherRecords= new List<WeatherConditions>();
-                return Search(weatherRecords);
-            }
-        private WeatherPredictionResult Search(List<WeatherConditions> weatherRecords)
+            if (weatherRecords == null) 
+                weatherRecords= new List<WeatherConditions>();
+            var Result= CalculateProbabilities(weatherRecords);
+
+            return Result;
+        }
+        private WeatherPredictionResult CalculateProbabilities(List<WeatherConditions> weatherRecords)
         {
             float NumOfHotDays = 0, NumOfColdDays = 0, NumOfWindyDays = 0, NumOfWetDays = 0, NumOfHumidDays = 0;
             float TotalTemp = 0, TotalHumidty = 0, TotalPrecipitation = 0, TotalWindSpeed = 0;
@@ -80,6 +87,8 @@ namespace WillItRainOnMyParade.BLL.Services
             };
             return Result;
         }
+
+
     }
 }
 

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.Extensions.Configuration;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -11,15 +12,17 @@ namespace WillItRainOnMyParade.DAL.Clients
     public class NasaWeatherClient : INasaWeatherClient
     {
         private readonly HttpClient _httpClient;
+        private readonly IConfiguration config;
 
-        public NasaWeatherClient(HttpClient httpClient)
+        public NasaWeatherClient(HttpClient httpClient, IConfiguration config)
         {
             _httpClient = httpClient;
+            this.config = config;
         }
 
         public async Task<List<WeatherConditions>> GetDailyDataAsync(float lat, float lon, DateTime start, DateTime end)
         {
-            string url = $"https://power.larc.nasa.gov/api/temporal/daily/point" +
+            string url = config["NasaPowerAPI:URL"] +
              $"?start={start:yyyyMMdd}&end={end:yyyyMMdd}" +
              $"&latitude={lat}&longitude={lon}" +
              $"&parameters=T2M,PRECTOTCORR,RH2M,WS2M,ALLSKY_KT" +

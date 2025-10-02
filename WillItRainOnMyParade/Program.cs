@@ -9,7 +9,9 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddHttpClient<INasaWeatherClient, NasaWeatherClient>();
+builder.Services.AddScoped<IGoogleAIClient, GoogleAIClient>();
 builder.Services.AddScoped<IWeatherService, WeatherService>();
+builder.Services.AddScoped<IGoogleAIService, GoogleAIService>();
 builder.Services.AddOpenApi();
 
 builder.Services.AddCors(options =>
