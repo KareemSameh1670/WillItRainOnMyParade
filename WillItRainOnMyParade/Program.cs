@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Caching.Memory;
 using WillItRainOnMyParade.BLL.Interfaces;
 using WillItRainOnMyParade.BLL.Services;
 using WillItRainOnMyParade.DAL.Clients;
@@ -9,8 +10,17 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddHttpClient<INasaWeatherClient, NasaWeatherClient>();
+builder.Services.AddMemoryCache();  //Add built-in memory cache
+
+// Wrap WeatherService with CachedWeatherService
+builder.Services.AddScoped<IWeatherService>(sp =>
+{
+    var inner = ActivatorUtilities.CreateInstance<WeatherService>(sp);
+    var cache = sp.GetRequiredService<IMemoryCache>();
+    return new CachedWeatherService(inner, cache, ttl: TimeSpan.FromMinutes(30));
+});
+
 builder.Services.AddScoped<IGoogleAIClient, GoogleAIClient>();
-builder.Services.AddScoped<IWeatherService, WeatherService>();
 builder.Services.AddScoped<IGoogleAIService, GoogleAIService>();
 builder.Services.AddOpenApi();
 
